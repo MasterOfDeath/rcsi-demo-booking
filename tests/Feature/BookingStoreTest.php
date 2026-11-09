@@ -61,6 +61,24 @@ class BookingStoreTest extends TestCase
         $this->assertDatabaseCount('bookings', 3);
     }
 
+    /** Tests that overlapping intervals in different rooms are allowed. */
+    public function test_allows_same_time_slot_in_a_different_room(): void
+    {
+        $user = User::factory()->create();
+        $room = Room::factory()->create();
+        $otherRoom = Room::factory()->for($room->office)->create();
+        Booking::factory()->for($room)->for($user)->create([
+            'starts_at' => '2027-01-11T07:00:00+00:00',
+            'ends_at' => '2027-01-11T08:00:00+00:00',
+        ]);
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/bookings', $this->validPayload($otherRoom));
+
+        $response->assertOk()->assertJsonPath('room_id', $otherRoom->id);
+        $this->assertDatabaseCount('bookings', 2);
+    }
+
     /** Tests that every overlapping interval shape is rejected with a validation error. */
     #[DataProvider('overlappingIntervals')]
     public function test_returns_422_when_booking_overlaps_an_existing_one(string $startsAt, string $endsAt): void
