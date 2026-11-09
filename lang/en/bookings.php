@@ -5,6 +5,7 @@ return [
     'invalid_duration' => 'The duration must be between 15 minutes and 4 hours in 15-minute increments.',
     'invalid_end_grid' => 'The end time must align with a 15-minute interval.',
     'invalid_start_grid' => 'The start time must align with a 15-minute interval.',
+    'iso8601' => 'Provide the date and time in ISO 8601 format with a timezone.',
     'only_author_can_cancel' => 'Only the author can cancel the booking.',
     'room_unavailable' => 'The room is already booked for this time.',
     'starts_before_working_hours' => 'The booking must start no earlier than 09:00 in the office local time.',

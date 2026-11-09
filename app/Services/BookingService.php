@@ -59,11 +59,11 @@ class BookingService
             $errors['ends_at'][] = __('bookings.invalid_duration');
         }
 
-        if ($start->minute % 15 !== 0 || $start->second !== 0) {
+        if ($start->minute % 15 !== 0 || $start->second !== 0 || $start->microsecond !== 0) {
             $errors['starts_at'][] = __('bookings.invalid_start_grid');
         }
 
-        if ($end->minute % 15 !== 0 || $end->second !== 0) {
+        if ($end->minute % 15 !== 0 || $end->second !== 0 || $end->microsecond !== 0) {
             $errors['ends_at'][] = __('bookings.invalid_end_grid');
         }
 

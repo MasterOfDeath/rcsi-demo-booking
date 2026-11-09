@@ -195,6 +195,52 @@ class BookingStoreTest extends TestCase
         $this->assertDatabaseCount('bookings', 0);
     }
 
+    /** Tests that fractional seconds are rejected at both booking boundaries. */
+    #[DataProvider('intervalsWithMicroseconds')]
+    public function test_returns_422_when_dates_have_microseconds(
+        string $startsAt,
+        string $endsAt,
+        array $errorFields,
+    ): void {
+        $user = User::factory()->create();
+        $room = Room::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/bookings', $this->validPayload($room, [
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+        ]));
+
+        $response->assertUnprocessable()->assertJsonValidationErrors($errorFields);
+        $this->assertDatabaseCount('bookings', 0);
+    }
+
+    /**
+     * Provides intervals with fractional seconds and their expected error fields.
+     *
+     * @return array<string, array{string, string, array<string>}>
+     */
+    public static function intervalsWithMicroseconds(): array
+    {
+        return [
+            'start with microseconds' => [
+                '2027-01-11T10:00:00.500000+03:00',
+                '2027-01-11T11:00:00.000000+03:00',
+                ['starts_at'],
+            ],
+            'end with microseconds' => [
+                '2027-01-11T10:00:00.000000+03:00',
+                '2027-01-11T11:00:00.500000+03:00',
+                ['ends_at'],
+            ],
+            'same seconds with different microseconds' => [
+                '2027-01-11T10:00:00.100000+03:00',
+                '2027-01-11T11:00:00.900000+03:00',
+                ['starts_at', 'ends_at'],
+            ],
+        ];
+    }
+
     /** Tests that the complete booking must fit within office working hours. */
     #[DataProvider('outsideWorkingHours')]
     public function test_returns_422_when_booking_is_outside_office_working_hours(
@@ -239,6 +285,38 @@ class BookingStoreTest extends TestCase
         $response = $this->postJson('/api/bookings', $this->validPayload($room, [
             'starts_at' => '2027-01-11T02:00:00+00:00',
             'ends_at' => '2027-01-11T03:00:00+00:00',
+        ]));
+
+        $response->assertOk();
+        $this->assertDatabaseCount('bookings', 1);
+    }
+
+    /** Tests that ISO 8601 dates may use the UTC designator. */
+    public function test_accepts_iso_8601_dates_with_utc_designator(): void
+    {
+        $user = User::factory()->create();
+        $room = Room::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/bookings', $this->validPayload($room, [
+            'starts_at' => '2027-01-11T07:00:00Z',
+            'ends_at' => '2027-01-11T08:00:00Z',
+        ]));
+
+        $response->assertOk();
+        $this->assertDatabaseCount('bookings', 1);
+    }
+
+    /** Tests that ISO 8601 dates may contain zero fractional seconds. */
+    public function test_accepts_iso_8601_dates_with_zero_fractional_seconds(): void
+    {
+        $user = User::factory()->create();
+        $room = Room::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/bookings', $this->validPayload($room, [
+            'starts_at' => '2027-01-11T10:00:00.000000+03:00',
+            'ends_at' => '2027-01-11T11:00:00.000000+03:00',
         ]));
 
         $response->assertOk();
@@ -310,6 +388,11 @@ class BookingStoreTest extends TestCase
             'SQL injection in room id' => [['room_id' => '1; DROP TABLE bookings; --'], 'room_id'],
             'invalid start date' => [['starts_at' => 'not-a-date'], 'starts_at'],
             'invalid end date' => [['ends_at' => 'not-a-date'], 'ends_at'],
+            'non-ISO start date' => [['starts_at' => '2027-01-11 10:00:00+03:00'], 'starts_at'],
+            'impossible start calendar date' => [['starts_at' => '2027-02-30T10:00:00+03:00'], 'starts_at'],
+            'impossible end calendar date' => [['ends_at' => '2027-02-30T11:00:00+03:00'], 'ends_at'],
+            'invalid start UTC offset' => [['starts_at' => '2027-01-11T10:00:00+25:00'], 'starts_at'],
+            'invalid end UTC offset' => [['ends_at' => '2027-01-11T11:00:00+03:60'], 'ends_at'],
             'empty title' => [['title' => ''], 'title'],
         ];
     }
