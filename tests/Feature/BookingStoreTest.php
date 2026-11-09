@@ -325,7 +325,7 @@ class BookingStoreTest extends TestCase
                 'ends_at' => '2027-01-11 08:30:00',
             ]);
 
-            $this->fail('База данных приняла пересекающуюся бронь.');
+            $this->fail('The database accepted an overlapping booking.');
         } catch (QueryException $exception) {
             $this->assertSame('23P01', $exception->getCode());
         }

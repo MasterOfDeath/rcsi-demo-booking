@@ -39,7 +39,7 @@ class BookingService
             }
 
             throw ValidationException::withMessages([
-                'starts_at' => 'Комната уже забронирована на это время.',
+                'starts_at' => __('bookings.room_unavailable'),
             ]);
         }
     }
@@ -56,33 +56,33 @@ class BookingService
         $errors = [];
 
         if ($durationInSeconds < 15 * 60 || $durationInSeconds > 4 * 60 * 60 || $durationInSeconds % (15 * 60) !== 0) {
-            $errors['ends_at'][] = 'Длительность должна быть от 15 минут до 4 часов с шагом 15 минут.';
+            $errors['ends_at'][] = __('bookings.invalid_duration');
         }
 
         if ($start->minute % 15 !== 0 || $start->second !== 0) {
-            $errors['starts_at'][] = 'Время начала должно быть кратно 15 минутам.';
+            $errors['starts_at'][] = __('bookings.invalid_start_grid');
         }
 
         if ($end->minute % 15 !== 0 || $end->second !== 0) {
-            $errors['ends_at'][] = 'Время окончания должно быть кратно 15 минутам.';
+            $errors['ends_at'][] = __('bookings.invalid_end_grid');
         }
 
         $workingDayStart = $start->copy()->setTime(9, 0);
         $workingDayEnd = $start->copy()->setTime(20, 0);
 
         if ($start->lt($workingDayStart)) {
-            $errors['starts_at'][] = 'Бронь должна начинаться не раньше 09:00 по местному времени офиса.';
+            $errors['starts_at'][] = __('bookings.starts_before_working_hours');
         }
 
         if ($end->gt($workingDayEnd)) {
-            $errors['ends_at'][] = 'Бронь должна заканчиваться не позднее 20:00 по местному времени офиса.';
+            $errors['ends_at'][] = __('bookings.ends_after_working_hours');
         }
 
         if ($errors === [] && Booking::where('room_id', $room->id)
             ->where('starts_at', '<', $endsAtUtc)
             ->where('ends_at', '>', $startsAtUtc)
             ->exists()) {
-            $errors['starts_at'][] = 'Комната уже забронирована на это время.';
+            $errors['starts_at'][] = __('bookings.room_unavailable');
         }
 
         if ($errors !== []) {
