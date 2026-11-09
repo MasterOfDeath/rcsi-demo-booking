@@ -73,7 +73,10 @@ class BookingStoreTest extends TestCase
         ]);
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/bookings', $this->validPayload($otherRoom));
+        $response = $this->postJson('/api/bookings', $this->validPayload($otherRoom, [
+            'starts_at' => '2027-01-11T10:00:00+03:00',
+            'ends_at' => '2027-01-11T11:00:00+03:00',
+        ]));
 
         $response->assertOk()->assertJsonPath('room_id', $otherRoom->id);
         $this->assertDatabaseCount('bookings', 2);
