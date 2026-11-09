@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/bookings', [BookingController::class, 'store']);
-    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
-    Route::get('/rooms/{room}/bookings/today', [BookingController::class, 'today']);
+    Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])
+        ->whereNumber('booking');
+    Route::get('/rooms/{room}/bookings/today', [BookingController::class, 'today'])
+        ->whereNumber('room');
 });

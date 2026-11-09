@@ -45,6 +45,14 @@ class BookingDestroyTest extends TestCase
         $this->deleteJson('/api/bookings/999999')->assertNotFound();
     }
 
+    /** Tests that a non-numeric booking ID returns not found. */
+    public function test_returns_404_when_booking_id_is_not_numeric(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->deleteJson('/api/bookings/abc')->assertNotFound();
+    }
+
     /** Tests that unauthenticated users cannot delete bookings. */
     public function test_returns_401_when_unauthenticated(): void
     {

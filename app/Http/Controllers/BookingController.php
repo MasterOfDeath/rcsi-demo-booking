@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -37,9 +38,11 @@ class BookingController extends Controller
     }
 
     /** Deletes a booking when requested by its author. */
-    public function destroy($id)
+    public function destroy(Request $request, Booking $booking): Response
     {
-        Booking::findOrFail($id)->delete();
+        abort_if($booking->user_id !== $request->user()->id, 403, __('bookings.only_author_can_cancel'));
+
+        $booking->delete();
 
         return response()->noContent();
     }
