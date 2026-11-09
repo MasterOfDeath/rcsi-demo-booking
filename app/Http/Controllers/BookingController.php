@@ -6,12 +6,15 @@ use App\Models\Booking;
 use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
-    public function index(Request $request)
+    /** @return LengthAwarePaginator<int, Booking> */
+    public function index(Request $request): LengthAwarePaginator
     {
         return Booking::where('user_id', $request->user()->id)
             ->orderByRaw('starts_at DESC')
@@ -49,13 +52,14 @@ class BookingController extends Controller
         return response()->noContent();
     }
 
-    public function today(Room $room)
+    /** @return Collection<int, array{time: string, author: string}> */
+    public function today(Room $room): Collection
     {
         return $room->bookings()
             ->whereDate('starts_at', today())
             ->get()
             ->map(fn ($b) => [
-                'time' => $b->starts_at . ' – ' . $b->ends_at,
+                'time' => $b->starts_at.' – '.$b->ends_at,
                 'author' => $b->user->name,
             ]);
     }

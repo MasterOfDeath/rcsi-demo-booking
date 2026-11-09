@@ -4,6 +4,7 @@
 .env.backup
 .env.production
 .phpactor.json
+.php-cs-fixer.cache
 .phpunit.result.cache
 /.codex
 /.cursor/
@@ -19,6 +20,7 @@
 /public/hot
 /public/storage
 /storage/*.key
+/storage/framework/phpstan/
 /storage/pail
 /vendor
 _ide_helper.php

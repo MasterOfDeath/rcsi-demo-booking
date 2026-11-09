@@ -67,6 +67,15 @@ docker compose exec app php artisan test
 
 Тесты идут на PostgreSQL в отдельной базе `testing`.
 
+Статический анализ и проверка стиля:
+
+```sh
+docker compose exec app composer analyse
+docker compose exec app composer cs-check
+```
+
+Автоматическое исправление стиля: `docker compose exec app composer cs-fix`.
+
 ## ИИ-агенты
 
 В проекте установлен [Laravel Boost](https://laravel.com/docs/boost): правила для агентов лежат в `AGENTS.md` и `CLAUDE.md`. Скиллы и MCP-сервер для своего агента можно подключить командой:

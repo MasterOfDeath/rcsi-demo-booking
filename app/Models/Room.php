@@ -15,11 +15,13 @@ class Room extends Model
     /** @use HasFactory<RoomFactory> */
     use HasFactory;
 
+    /** @return BelongsTo<Office, $this> */
     public function office(): BelongsTo
     {
         return $this->belongsTo(Office::class);
     }
 
+    /** @return HasMany<Booking, $this> */
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
