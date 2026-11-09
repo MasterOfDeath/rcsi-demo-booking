@@ -12,6 +12,16 @@ use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
+    private const int MINIMUM_DURATION_MINUTES = 15;
+
+    private const int MAXIMUM_DURATION_HOURS = 4;
+
+    private const int BOOKING_STEP_MINUTES = 15;
+
+    private const int WORKING_DAY_START_HOUR = 9;
+
+    private const int WORKING_DAY_END_HOUR = 20;
+
     /**
      * Creates a booking after enforcing the booking rules.
      */
@@ -53,29 +63,40 @@ class BookingService
         Carbon $endsAtUtc,
     ): void {
         $durationInSeconds = $end->getTimestamp() - $start->getTimestamp();
+        $minimumDurationInSeconds = self::MINIMUM_DURATION_MINUTES * 60;
+        $maximumDurationInSeconds = self::MAXIMUM_DURATION_HOURS * 60 * 60;
+        $bookingStepInSeconds = self::BOOKING_STEP_MINUTES * 60;
         $errors = [];
 
-        if ($durationInSeconds < 15 * 60 || $durationInSeconds > 4 * 60 * 60 || $durationInSeconds % (15 * 60) !== 0) {
-            $errors['ends_at'][] = __('bookings.invalid_duration');
+        if ($durationInSeconds < $minimumDurationInSeconds || $durationInSeconds > $maximumDurationInSeconds || $durationInSeconds % $bookingStepInSeconds !== 0) {
+            $errors['ends_at'][] = __('bookings.invalid_duration', [
+                'min' => self::MINIMUM_DURATION_MINUTES,
+                'max' => self::MAXIMUM_DURATION_HOURS,
+                'step' => self::BOOKING_STEP_MINUTES,
+            ]);
         }
 
-        if ($start->minute % 15 !== 0 || $start->second !== 0 || $start->microsecond !== 0) {
-            $errors['starts_at'][] = __('bookings.invalid_start_grid');
+        if ($start->minute % self::BOOKING_STEP_MINUTES !== 0 || $start->second !== 0 || $start->microsecond !== 0) {
+            $errors['starts_at'][] = __('bookings.invalid_start_grid', ['step' => self::BOOKING_STEP_MINUTES]);
         }
 
-        if ($end->minute % 15 !== 0 || $end->second !== 0 || $end->microsecond !== 0) {
-            $errors['ends_at'][] = __('bookings.invalid_end_grid');
+        if ($end->minute % self::BOOKING_STEP_MINUTES !== 0 || $end->second !== 0 || $end->microsecond !== 0) {
+            $errors['ends_at'][] = __('bookings.invalid_end_grid', ['step' => self::BOOKING_STEP_MINUTES]);
         }
 
-        $workingDayStart = $start->copy()->setTime(9, 0);
-        $workingDayEnd = $start->copy()->setTime(20, 0);
+        $workingDayStart = $start->copy()->setTime(self::WORKING_DAY_START_HOUR, 0);
+        $workingDayEnd = $start->copy()->setTime(self::WORKING_DAY_END_HOUR, 0);
 
         if ($start->lt($workingDayStart)) {
-            $errors['starts_at'][] = __('bookings.starts_before_working_hours');
+            $errors['starts_at'][] = __('bookings.starts_before_working_hours', [
+                'time' => sprintf('%02d:00', self::WORKING_DAY_START_HOUR),
+            ]);
         }
 
         if ($end->gt($workingDayEnd)) {
-            $errors['ends_at'][] = __('bookings.ends_after_working_hours');
+            $errors['ends_at'][] = __('bookings.ends_after_working_hours', [
+                'time' => sprintf('%02d:00', self::WORKING_DAY_END_HOUR),
+            ]);
         }
 
         if ($errors === [] && Booking::where('room_id', $room->id)
