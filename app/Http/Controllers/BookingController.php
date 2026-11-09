@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Dto\CreateBookingData;
+use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Services\BookingService;
@@ -27,16 +27,9 @@ class BookingController extends Controller
     }
 
     /** Creates a booking for the authenticated user. */
-    public function store(Request $request, BookingService $bookingService): JsonResponse
+    public function store(StoreBookingRequest $request, BookingService $bookingService): JsonResponse
     {
-        $validated = $request->validate([
-            'room_id' => ['required', 'integer', 'exists:rooms,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'starts_at' => ['required', 'date'],
-            'ends_at' => ['required', 'date', 'after:starts_at'],
-        ]);
-
-        $booking = $bookingService->create($request->user(), CreateBookingData::fromArray($validated));
+        $booking = $bookingService->create($request->user(), $request->toData());
 
         Log::channel('bookings')->info('Booking created', ['booking_id' => $booking->id]);
 
