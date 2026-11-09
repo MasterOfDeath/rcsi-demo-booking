@@ -14,7 +14,11 @@ use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
-    /** @return LengthAwarePaginator<int, Booking> */
+    /**
+     * Returns the authenticated user's bookings.
+     *
+     * @return LengthAwarePaginator<int, Booking>
+     */
     public function index(Request $request): LengthAwarePaginator
     {
         return Booking::where('user_id', $request->user()->id)
@@ -22,6 +26,7 @@ class BookingController extends Controller
             ->paginate(20);
     }
 
+    /** Creates a booking for the authenticated user. */
     public function store(Request $request, BookingService $bookingService): JsonResponse
     {
         $validated = $request->validate([
@@ -38,6 +43,7 @@ class BookingController extends Controller
         return response()->json($booking);
     }
 
+    /** Deletes a booking when requested by its author. */
     public function destroy($id)
     {
         Booking::findOrFail($id)->delete();
@@ -45,7 +51,11 @@ class BookingController extends Controller
         return response()->noContent();
     }
 
-    /** @return Collection<int, array{time: string, author: string}> */
+    /**
+     * Returns today's bookings for the room.
+     *
+     * @return Collection<int, array{time: string, author: string}>
+     */
     public function today(Room $room): Collection
     {
         return $room->bookings()
